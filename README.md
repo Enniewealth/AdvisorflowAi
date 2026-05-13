@@ -50,6 +50,8 @@ Set `VITE_API_BASE_URL` to the deployed backend API URL on Vercel.
 
 ## Production notes
 
+- If Render is configured as a Docker service, use the repository root as the Docker context. The root `Dockerfile` builds and runs the Django backend from `backend/`.
+- If Render is configured from `render.yaml`, it uses the native Python service definition with `rootDir: backend`.
 - Run `python manage.py send_due_reminders` on a daily Render cron job to send due renewal emails.
 - Configure a real SMTP backend for production email reminders and password reset.
 - Use Render PostgreSQL for the backend database.
