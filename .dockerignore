@@ -10,3 +10,5 @@ backend/staticfiles
 **/*.pyc
 .env
 *.log
+frontend/.env
+backend/.env
