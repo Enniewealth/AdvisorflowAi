@@ -127,6 +127,11 @@ CORS_ALLOWED_ORIGINS = [
     for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
     if origin.strip()
 ]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    regex.strip()
+    for regex in os.getenv("CORS_ALLOWED_ORIGIN_REGEXES", r"^https://.*\.vercel\.app$").split(",")
+    if regex.strip()
+]
 CORS_ALLOW_CREDENTIALS = True
 
 EMAIL_BACKEND = os.getenv(

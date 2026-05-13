@@ -2,6 +2,8 @@ import axios from "axios";
 
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const isBrowserOnLocalhost = () =>
+  ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
 export const tokenStore = {
   getAccess: () => localStorage.getItem("advisorflow_access"),
@@ -55,3 +57,37 @@ api.interceptors.response.use(
 );
 
 export const unwrapResults = (data) => (Array.isArray(data) ? data : data.results || []);
+
+const fieldLabels = {
+  agency_name: "Agency name",
+  email: "Email",
+  full_name: "Full name",
+  name: "Full name",
+  non_field_errors: "Error",
+  password: "Password",
+};
+
+export function formatApiError(error, fallback = "Something went wrong. Please try again.") {
+  if (!error.response) {
+    if (API_BASE_URL.includes("localhost") && !isBrowserOnLocalhost()) {
+      return "Frontend API URL is not configured. In Vercel, set VITE_API_BASE_URL to your Render backend URL ending in /api, then redeploy.";
+    }
+    return "Could not reach the server. Check your internet connection and backend URL.";
+  }
+
+  const data = error.response.data;
+  if (!data) return fallback;
+  if (typeof data === "string") return data;
+  if (data.detail) return data.detail;
+
+  if (typeof data === "object") {
+    const messages = Object.entries(data).flatMap(([field, value]) => {
+      const label = fieldLabels[field] || field.replaceAll("_", " ");
+      const values = Array.isArray(value) ? value : [value];
+      return values.map((message) => `${label}: ${message}`);
+    });
+    if (messages.length) return messages.join(" ");
+  }
+
+  return fallback;
+}

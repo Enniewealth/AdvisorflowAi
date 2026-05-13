@@ -5,6 +5,7 @@ import Button from "../components/Button";
 import Input from "../components/Input";
 import { useAuth } from "../context/AuthContext";
 import AuthLayout from "../layouts/AuthLayout";
+import { formatApiError } from "../services/api";
 
 
 export default function Login() {
@@ -21,8 +22,8 @@ export default function Login() {
     try {
       await login(form);
       navigate("/dashboard");
-    } catch {
-      setError("Login failed. Check your email and password.");
+    } catch (err) {
+      setError(formatApiError(err, "Login failed. Check your email and password."));
     } finally {
       setSubmitting(false);
     }
