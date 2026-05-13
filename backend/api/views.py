@@ -7,7 +7,37 @@ from django.db.models import Count
 from django.utils import timezone
 from reminders.models import Reminder
 from reminders.serializers import ReminderSerializer
-from rest_framework import response, views
+from rest_framework import permissions, response, views
+
+
+class PublicApiRootView(views.APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        return response.Response(
+            {
+                "name": "AdvisorFlow AI API",
+                "status": "ok",
+                "message": "Backend is running. Use /api/ for AdvisorFlow CRM endpoints.",
+                "endpoints": {
+                    "api": "/api/",
+                    "health": "/healthz/",
+                    "register": "/api/auth/register/",
+                    "login": "/api/auth/login/",
+                    "dashboard": "/api/dashboard/",
+                    "clients": "/api/clients/",
+                    "reminders": "/api/reminders/",
+                    "education": "/api/education/",
+                },
+            }
+        )
+
+
+class HealthCheckView(views.APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        return response.Response({"status": "ok"})
 
 
 class DashboardView(views.APIView):

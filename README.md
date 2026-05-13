@@ -50,6 +50,7 @@ Set `VITE_API_BASE_URL` to the deployed backend API URL on Vercel.
 
 ## Production notes
 
+- Opening the backend root URL should return public API metadata. Health checks are available at `/healthz/` and `/api/health/`.
 - If Render is configured as a Docker service, use the repository root as the Docker context. The root `Dockerfile` builds and runs the Django backend from `backend/`.
 - If Render is configured as a Python service from the repository root:
   - Build command: `sh build.sh`
