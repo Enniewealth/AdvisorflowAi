@@ -2,6 +2,8 @@ import axios from "axios";
 
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const isBrowserOnLocalhost = () =>
+  ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
 export const tokenStore = {
   getAccess: () => localStorage.getItem("advisorflow_access"),
@@ -67,6 +69,9 @@ const fieldLabels = {
 
 export function formatApiError(error, fallback = "Something went wrong. Please try again.") {
   if (!error.response) {
+    if (API_BASE_URL.includes("localhost") && !isBrowserOnLocalhost()) {
+      return "Frontend API URL is not configured. In Vercel, set VITE_API_BASE_URL to your Render backend URL ending in /api, then redeploy.";
+    }
     return "Could not reach the server. Check your internet connection and backend URL.";
   }
 
