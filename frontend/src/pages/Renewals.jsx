@@ -2,13 +2,14 @@ import { Link } from "react-router-dom";
 
 import Button from "../components/Button";
 import EmptyState from "../components/EmptyState";
+import ErrorState from "../components/ErrorState";
 import StatusBadge from "../components/StatusBadge";
 import { useAsync } from "../hooks/useAsync";
-import { api, unwrapResults } from "../services/api";
+import { api, formatApiError, unwrapResults } from "../services/api";
 
 
 export default function Renewals() {
-  const { data, loading } = useAsync(async () => {
+  const { data, loading, error, refresh } = useAsync(async () => {
     const response = await api.get("/clients/");
     return unwrapResults(response.data);
   }, []);
@@ -27,6 +28,8 @@ export default function Renewals() {
       </div>
       {loading ? (
         <p className="text-sm text-slate-500">Loading renewals...</p>
+      ) : error ? (
+        <ErrorState message={formatApiError(error, "Renewals could not be loaded.")} onRetry={refresh} />
       ) : !renewalClients.length ? (
         <EmptyState title="No urgent renewals" description="All visible policies are outside the 7-day renewal window." />
       ) : (

@@ -7,6 +7,15 @@ User = get_user_model()
 
 
 class AdvisorSerializer(serializers.ModelSerializer):
+    def validate_email(self, value):
+        email = value.strip().lower()
+        queryset = User.objects.filter(email__iexact=email)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise serializers.ValidationError("An advisor account with this email already exists.")
+        return email
+
     class Meta:
         model = User
         fields = (

@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 
 import EmptyState from "../components/EmptyState";
+import ErrorState from "../components/ErrorState";
 import { useAsync } from "../hooks/useAsync";
-import { api, unwrapResults } from "../services/api";
+import { api, formatApiError, unwrapResults } from "../services/api";
 
 
 const languages = [
@@ -24,7 +25,7 @@ const categories = [
 export default function EducationHub() {
   const [language, setLanguage] = useState("");
   const [category, setCategory] = useState("");
-  const { data, loading } = useAsync(async () => {
+  const { data, loading, error, refresh } = useAsync(async () => {
     const response = await api.get("/education/");
     return unwrapResults(response.data);
   }, []);
@@ -56,6 +57,8 @@ export default function EducationHub() {
       </div>
       {loading ? (
         <p className="text-sm text-slate-500">Loading education content...</p>
+      ) : error ? (
+        <ErrorState message={formatApiError(error, "Education Hub could not be loaded.")} onRetry={refresh} />
       ) : !content.length ? (
         <EmptyState title="No content found" description="Seed education content from the backend or adjust your filters." />
       ) : (

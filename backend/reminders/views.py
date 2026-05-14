@@ -8,7 +8,7 @@ from .services import trigger_due_reminders
 
 class ReminderViewSet(viewsets.ModelViewSet):
     serializer_class = ReminderSerializer
-    http_method_names = ["get", "patch", "head", "options"]
+    http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_queryset(self):
         queryset = Reminder.objects.select_related("client").filter(advisor=self.request.user)

@@ -3,6 +3,7 @@ import { useState } from "react";
 import Button from "../components/Button";
 import Input from "../components/Input";
 import { useAuth } from "../context/AuthContext";
+import { formatApiError } from "../services/api";
 
 
 export default function Settings() {
@@ -13,15 +14,19 @@ export default function Settings() {
     agency_name: user?.agency_name || "",
   });
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const submit = async (event) => {
     event.preventDefault();
     setSaving(true);
     setMessage("");
+    setError("");
     try {
       await updateProfile(form);
       setMessage("Settings saved.");
+    } catch (err) {
+      setError(formatApiError(err, "Settings could not be saved."));
     } finally {
       setSaving(false);
     }
@@ -36,6 +41,7 @@ export default function Settings() {
       </div>
       <form className="space-y-4 rounded-2xl bg-white p-5 shadow-card" onSubmit={submit}>
         {message && <div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">{message}</div>}
+        {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</div>}
         <Input label="Full name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
         <Input label="Email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
         <Input label="Agency name" value={form.agency_name} onChange={(event) => setForm({ ...form, agency_name: event.target.value })} />

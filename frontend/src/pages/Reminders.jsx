@@ -3,31 +3,41 @@ import { useState } from "react";
 
 import Button from "../components/Button";
 import EmptyState from "../components/EmptyState";
+import ErrorState from "../components/ErrorState";
 import StatusBadge from "../components/StatusBadge";
 import { useAsync } from "../hooks/useAsync";
-import { api, unwrapResults } from "../services/api";
+import { api, formatApiError, unwrapResults } from "../services/api";
 
 
 export default function Reminders() {
   const [triggering, setTriggering] = useState(false);
-  const { data, loading, refresh } = useAsync(async () => {
+  const [actionError, setActionError] = useState("");
+  const { data, loading, error, refresh } = useAsync(async () => {
     const response = await api.get("/reminders/");
     return unwrapResults(response.data);
   }, []);
 
   const triggerDue = async () => {
     setTriggering(true);
+    setActionError("");
     try {
       await api.post("/reminders/trigger-due/");
       await refresh();
+    } catch (err) {
+      setActionError(formatApiError(err, "Due reminders could not be triggered."));
     } finally {
       setTriggering(false);
     }
   };
 
   const updateStatus = async (reminder, status) => {
-    await api.patch(`/reminders/${reminder.id}/`, { status });
-    await refresh();
+    setActionError("");
+    try {
+      await api.patch(`/reminders/${reminder.id}/`, { status });
+      await refresh();
+    } catch (err) {
+      setActionError(formatApiError(err, "Reminder status could not be updated."));
+    }
   };
 
   return (
@@ -43,8 +53,11 @@ export default function Reminders() {
           {triggering ? "Checking..." : "Trigger due emails"}
         </Button>
       </div>
+      {actionError && <div className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{actionError}</div>}
       {loading ? (
         <p className="text-sm text-slate-500">Loading reminders...</p>
+      ) : error ? (
+        <ErrorState message={formatApiError(error, "Reminders could not be loaded.")} onRetry={refresh} />
       ) : !data?.length ? (
         <EmptyState title="No reminders yet" description="Add clients with policy expiry dates to generate 7-day, expiry-day, and after-expiry reminders." />
       ) : (

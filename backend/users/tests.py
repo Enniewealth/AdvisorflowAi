@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework.test import APIClient
 
 
 class RegistrationApiTests(TestCase):
@@ -52,6 +53,33 @@ class RegistrationApiTests(TestCase):
                 "password": "AdvisorFlow@2026!",
             },
             content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()["email"],
+            ["An advisor account with this email already exists."],
+        )
+
+    def test_profile_update_rejects_duplicate_email(self):
+        User = get_user_model()
+        first_user = User.objects.create_user(
+            email="first@example.com",
+            password="AdvisorFlow@2026!",
+            name="First Advisor",
+        )
+        User.objects.create_user(
+            email="second@example.com",
+            password="AdvisorFlow@2026!",
+            name="Second Advisor",
+        )
+        api_client = APIClient()
+        api_client.force_authenticate(user=first_user)
+
+        response = api_client.patch(
+            reverse("me"),
+            data={"email": "SECOND@example.com"},
+            format="json",
         )
 
         self.assertEqual(response.status_code, 400)

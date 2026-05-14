@@ -1,14 +1,15 @@
 import { BellRing, CalendarClock, ShieldCheck, Users } from "lucide-react";
 
+import ErrorState from "../components/ErrorState";
 import StatCard from "../components/StatCard";
 import { useAsync } from "../hooks/useAsync";
-import { api } from "../services/api";
+import { api, formatApiError } from "../services/api";
 import ActivityTimeline from "./dashboard/ActivityTimeline";
 import ReminderPanel from "./dashboard/ReminderPanel";
 
 
 export default function Dashboard() {
-  const { data, loading } = useAsync(async () => {
+  const { data, loading, error, refresh } = useAsync(async () => {
     const response = await api.get("/dashboard/");
     return response.data;
   }, []);
@@ -24,6 +25,8 @@ export default function Dashboard() {
       </div>
       {loading ? (
         <p className="text-sm text-slate-500">Loading dashboard...</p>
+      ) : error ? (
+        <ErrorState message={formatApiError(error, "Dashboard could not be loaded.")} onRetry={refresh} />
       ) : (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

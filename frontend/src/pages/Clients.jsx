@@ -3,10 +3,11 @@ import { useMemo, useState } from "react";
 
 import Button from "../components/Button";
 import EmptyState from "../components/EmptyState";
+import ErrorState from "../components/ErrorState";
 import Input from "../components/Input";
 import StatusBadge from "../components/StatusBadge";
 import { useAsync } from "../hooks/useAsync";
-import { api, unwrapResults } from "../services/api";
+import { api, formatApiError, unwrapResults } from "../services/api";
 
 
 const initialForm = {
@@ -25,9 +26,10 @@ export default function Clients() {
   const [query, setQuery] = useState("");
   const [editingClient, setEditingClient] = useState(null);
   const [form, setForm] = useState(initialForm);
+  const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const { data, loading, refresh } = useAsync(async () => {
+  const { data, loading, error, refresh } = useAsync(async () => {
     const response = await api.get("/clients/");
     return unwrapResults(response.data);
   }, []);
@@ -59,14 +61,21 @@ export default function Clients() {
   const submit = async (event) => {
     event.preventDefault();
     setSaving(true);
+    setFormError("");
+    const payload = {
+      ...form,
+      policy_start_date: form.policy_start_date || null,
+    };
     try {
       if (editingClient) {
-        await api.put(`/clients/${editingClient.id}/`, form);
+        await api.put(`/clients/${editingClient.id}/`, payload);
       } else {
-        await api.post("/clients/", form);
+        await api.post("/clients/", payload);
       }
       resetForm();
       await refresh();
+    } catch (err) {
+      setFormError(formatApiError(err, "Client could not be saved."));
     } finally {
       setSaving(false);
     }
@@ -74,8 +83,12 @@ export default function Clients() {
 
   const removeClient = async (client) => {
     if (!confirm(`Delete ${client.full_name}?`)) return;
-    await api.delete(`/clients/${client.id}/`);
-    await refresh();
+    try {
+      await api.delete(`/clients/${client.id}/`);
+      await refresh();
+    } catch (err) {
+      setFormError(formatApiError(err, "Client could not be deleted."));
+    }
   };
 
   return (
@@ -91,6 +104,7 @@ export default function Clients() {
           </div>
         </div>
         <form className="space-y-4" onSubmit={submit}>
+          {formError && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{formError}</div>}
           <Input label="Full name" required value={form.full_name} onChange={(event) => setForm({ ...form, full_name: event.target.value })} />
           <Input label="Phone number" required value={form.phone_number} onChange={(event) => setForm({ ...form, phone_number: event.target.value })} />
           <Input label="Email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
@@ -133,6 +147,8 @@ export default function Clients() {
         </div>
         {loading ? (
           <p className="text-sm text-slate-500">Loading clients...</p>
+        ) : error ? (
+          <ErrorState message={formatApiError(error, "Clients could not be loaded.")} onRetry={refresh} />
         ) : !clients.length ? (
           <EmptyState title="No clients yet" description="Add your first client to generate policy reminders automatically." />
         ) : (

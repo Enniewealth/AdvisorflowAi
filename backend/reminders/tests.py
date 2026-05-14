@@ -3,6 +3,8 @@ from datetime import date, timedelta
 from clients.models import Client
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
+from rest_framework.test import APIClient
 
 from .models import Reminder
 from .services import sync_reminders_for_client, trigger_due_reminders
@@ -90,3 +92,26 @@ class ReminderScheduleTests(TestCase):
             Reminder.objects.filter(advisor=second_advisor, status=Reminder.Status.PENDING).count(),
             3,
         )
+
+    def test_trigger_due_endpoint_accepts_post(self):
+        advisor = get_user_model().objects.create_user(
+            email="endpoint@example.com",
+            password="strong-password-123",
+            name="Endpoint Advisor",
+        )
+        client = Client.objects.create(
+            advisor=advisor,
+            full_name="Ngozi Okafor",
+            phone_number="08030000003",
+            insurance_provider="NEM",
+            policy_type="Motor insurance",
+            expiry_date=date.today(),
+        )
+        sync_reminders_for_client(client)
+        api_client = APIClient()
+        api_client.force_authenticate(user=advisor)
+
+        response = api_client.post(reverse("reminders-trigger-due"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["triggered"], 2)
