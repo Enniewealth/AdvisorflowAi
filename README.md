@@ -59,6 +59,8 @@ Set `VITE_API_BASE_URL` to the deployed backend API URL on Vercel.
   - Build command: `python -m pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --noinput`
   - Start command: `sh start.sh`
 - If Render is configured from `render.yaml`, it uses the native Python service definition with `rootDir: backend` and the commands above.
+- If Vercel is configured from the repository root, the root `vercel.json` builds the React app from `frontend/` and outputs `frontend/dist`.
+- If Vercel is configured with root directory set to `frontend`, it uses `frontend/vercel.json`.
 - Run `python manage.py send_due_reminders` on a daily Render cron job to send due renewal emails.
 - Configure a real SMTP backend for production email reminders and password reset.
 - Use Render PostgreSQL for the backend database.
