@@ -1,9 +1,27 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 User = get_user_model()
+
+
+class LoginSerializer(TokenObtainPairSerializer):
+    default_error_messages = {
+        "no_active_account": (
+            "No advisor account was found with those credentials. "
+            "Check the email and password, or register a new account first."
+        )
+    }
+
+    def validate(self, attrs):
+        email = attrs.get(self.username_field)
+        if email:
+            user = User.objects.filter(email__iexact=email.strip()).first()
+            if user:
+                attrs[self.username_field] = user.email
+        return super().validate(attrs)
 
 
 class AdvisorSerializer(serializers.ModelSerializer):

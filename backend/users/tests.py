@@ -87,3 +87,36 @@ class RegistrationApiTests(TestCase):
             response.json()["email"],
             ["An advisor account with this email already exists."],
         )
+
+    def test_login_accepts_case_insensitive_email(self):
+        get_user_model().objects.create_user(
+            email="advisor@example.com",
+            password="AdvisorFlow@2026!",
+            name="Advisor",
+        )
+
+        response = self.client.post(
+            reverse("login"),
+            data={
+                "email": "ADVISOR@example.com",
+                "password": "AdvisorFlow@2026!",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("access", response.json())
+        self.assertIn("refresh", response.json())
+
+    def test_login_returns_clear_message_for_missing_account(self):
+        response = self.client.post(
+            reverse("login"),
+            data={
+                "email": "missing@example.com",
+                "password": "AdvisorFlow@2026!",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("No advisor account was found", response.json()["detail"])

@@ -1,5 +1,5 @@
 from django.utils import timezone
-from rest_framework import decorators, response, viewsets
+from rest_framework import decorators, response, status, viewsets
 
 from .models import Reminder
 from .serializers import ReminderSerializer
@@ -16,6 +16,12 @@ class ReminderViewSet(viewsets.ModelViewSet):
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        return response.Response(
+            {"detail": "Reminders are generated automatically when clients are created or updated."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
     @decorators.action(detail=False, methods=["post"], url_path="trigger-due")
     def trigger_due(self, request):
