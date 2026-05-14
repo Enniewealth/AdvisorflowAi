@@ -1,9 +1,15 @@
 import axios from "axios";
 
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+function normalizeApiBaseUrl(value) {
+  const fallback = "http://localhost:8000/api";
+  const trimmed = (value || fallback).trim().replace(/\/+$/, "");
+  return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
+}
+
+const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 const isBrowserOnLocalhost = () =>
-  ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
 
 export const tokenStore = {
   getAccess: () => localStorage.getItem("advisorflow_access"),
@@ -77,7 +83,12 @@ export function formatApiError(error, fallback = "Something went wrong. Please t
 
   const data = error.response.data;
   if (!data) return fallback;
-  if (typeof data === "string") return data;
+  if (typeof data === "string") {
+    if (data.toLowerCase().includes("<html") || data.toLowerCase().includes("<!doctype html")) {
+      return "The backend returned a 404 page. Check VITE_API_BASE_URL in Vercel: it should be your Render backend URL, and the app will add /api automatically.";
+    }
+    return data;
+  }
   if (data.detail) return data.detail;
 
   if (typeof data === "object") {
